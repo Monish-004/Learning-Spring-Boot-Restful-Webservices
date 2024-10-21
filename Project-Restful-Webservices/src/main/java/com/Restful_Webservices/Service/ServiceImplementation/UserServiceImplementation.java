@@ -2,6 +2,8 @@ package com.Restful_Webservices.Service.ServiceImplementation;
 
 import com.Restful_Webservices.DTO.UserDto;
 import com.Restful_Webservices.Entity.UserEntity;
+import com.Restful_Webservices.Exception.EmailAlreadyExist;
+import com.Restful_Webservices.Exception.UserNotFound;
 import com.Restful_Webservices.Mapper.UserMapper;
 import com.Restful_Webservices.Repository.UserRepository;
 import com.Restful_Webservices.Service.UserService;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +36,20 @@ public class UserServiceImplementation implements UserService
         // AUTOMATION CONVERTING FROM DTO TO ENTITY
         UserEntity covertingFromDto = modelMapper.map(userDtoService , UserEntity.class);
 
+
+
+
+        // EXCEPTION HANDLING INVOLVES HERE, IF THE EMAIL DOESN'T EXIST IT WILL SAVE OUR REQUEST
+        // OR ELSE IT THE CUSTOM CUSTOM EXCEPTION
+        // NOW, I'M CHECKING WHETHER THE NEW EMAIL IS ALREADY PRESENT OR NOT
+        Optional<UserEntity> checkingEmailToSave = repository.findByEmail(covertingFromDto.getEmail());
+
+
+        // IF THE EMAIL IS ALREADY PRESENT, IT WILL THROW THE CUSTOM EXCEPTION
+        if(checkingEmailToSave.isPresent())
+        {
+            throw new EmailAlreadyExist("User Email Already Exist, Kindly Check this",covertingFromDto.getEmail());
+        }
 
 
         // Saving the Entity to DataBase
@@ -90,11 +107,13 @@ public class UserServiceImplementation implements UserService
 
     // REST-FUL API TO FETCH DATAS BY ID
     @Override
-    public UserDto getUserById(Integer id)
+    public UserDto getUserById(Integer userId)
     {
 
         // FROM THE ENTITY, FETCHING OUR DATA BASED ON ID OR USER_ID FROM DATABASE
-        UserEntity providingEntityToClient =  repository.findById(id).get();
+        // EXCEPTION HANDLING INVOLVES HERE, IF THE userId isPresent, IT WILL GIVE THE DATA OR ELSE THROW A CUSTOM EXCEPTION
+        UserEntity providingEntityToClient =  repository.findById(userId).
+                orElseThrow( () -> new UserNotFound(userId) );
 
 
         // CONVERTING FROM ENTITY TO DTO AND RETURNING THE RESPONSE AS DTO
@@ -136,6 +155,19 @@ public class UserServiceImplementation implements UserService
 
         // AUTOMATION CONVERTING FROM DTO TO ENTITY
         UserEntity updateTheRecordById = modelMapper.map(updateTheUserEntity , UserEntity.class);
+
+
+
+        // EXCEPTION HANDLING INVOLVES HERE, IF THE EMAIL DOESN'T EXIST IT WILL SAVE OUR REQUEST
+        // OR ELSE IT THE CUSTOM CUSTOM EXCEPTION
+        Optional<UserEntity> checkingEmailToUpdate = repository.findByEmail( updateTheRecordById.getEmail() );
+
+
+        // IF THE EMAIL IS ALREADY PRESENT, IT WILL THROW THE CUSTOM EXCEPTION
+        if(checkingEmailToUpdate.isPresent())
+        {
+            throw new EmailAlreadyExist("User Email Already Exist, Kindly Check this",updateTheRecordById.getEmail() );
+        }
 
 
         // Saving the Entity to DataBase

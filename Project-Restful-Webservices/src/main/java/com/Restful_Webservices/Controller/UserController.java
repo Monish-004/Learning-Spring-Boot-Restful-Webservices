@@ -5,12 +5,17 @@ import com.Restful_Webservices.DTO.UserDto;
 import com.Restful_Webservices.Entity.UserEntity;
 import com.Restful_Webservices.Service.UserService;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 
 @RequestMapping("restful-webservice")
 @RestController
@@ -22,7 +27,7 @@ public class UserController
     // REST-FUL API TO SAVE DATAS
     // http://localhost:8080/restful-webservice/save-user
     @PostMapping("save-user")
-    public ResponseEntity<String> saveUser(@RequestBody UserDto dtoSavedUser)
+    public ResponseEntity<String> saveUser(@Valid @RequestBody UserDto dtoSavedUser)
     {
         service.createUser(dtoSavedUser);
         return new ResponseEntity<>("Users are Successfully Added to database", HttpStatus.CREATED);
@@ -31,8 +36,12 @@ public class UserController
     // REST-FUL API TO SAVE LIST OF DATAS
     // http://localhost:8080/restful-webservice/save-all-user
     @PostMapping("save-all-user")
-    public ResponseEntity<String> saveListOfUser(@RequestBody List<UserDto> listOfUsersSaved)
+    public ResponseEntity<String> saveListOfUser( @RequestBody @Valid List<UserDto> listOfUsersSaved, BindingResult bindingResult )
     {
+        if(bindingResult.hasErrors()) {
+            return new ResponseEntity<>("Some datas are missing!!",HttpStatus.BAD_REQUEST);
+        }
+
         service.createAllUser(listOfUsersSaved);
         return new ResponseEntity<>("List of Users are Saved Successfully",HttpStatus.CREATED);
     }
@@ -57,7 +66,7 @@ public class UserController
     // http://localhost:8080/restful-webservice/update-by/7
     @PutMapping("update-by/{id}")
     public ResponseEntity<UserDto> updateRecordsById(@PathVariable Integer id ,
-                                                        @RequestBody UserDto updateRecordsById)
+                                                     @Valid @RequestBody UserDto updateRecordsById)
     {
         updateRecordsById.setId(id);
         return new ResponseEntity<>(service.updateUserById(updateRecordsById),HttpStatus.OK);
